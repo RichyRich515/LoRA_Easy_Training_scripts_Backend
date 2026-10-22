@@ -146,10 +146,21 @@ def validate_args(args: dict) -> tuple[bool, list[str], dict]:
     # In Anima mode, pretrained_model_name_or_path holds the DiT model path,
     # and 'qwen3' / 'vae' hold the text encoder and VAE paths respectively.
     is_anima = "qwen3" in output_args
+    # MOSS-Image mode is detected by 'moss_max_token_length' (always set by the MOSS widget).
+    # pretrained_model_name_or_path is a pipeline folder (text encoder/VAE default to its subfolders)
+    # or a single transformer file, in which case the text encoder and VAE paths are required.
+    is_moss = "moss_max_token_length" in output_args
+    moss_needs_components = is_moss and not (
+        Path(str(output_args.get("pretrained_model_name_or_path", ""))) / "model_index.json"
+    ).is_file()
+    if is_moss and output_args.get("network_module", "networks.lora") not in ("networks.lora", "networks.lora_moss"):
+        passed_validation = False
+        errors.append("MOSS-Image training supports LoRA only (network type LoRA)")
     file_inputs = [
         {"name": "pretrained_model_name_or_path", "required": True},
         {"name": "qwen3", "required": is_anima},
-        {"name": "vae", "required": is_anima},
+        {"name": "vae", "required": is_anima or moss_needs_components},
+        {"name": "moss_text_encoder", "required": moss_needs_components},
         {"name": "sample_prompts", "required": False},
         {"name": "output_dir", "required": True},
         {"name": "logging_dir", "required": False},

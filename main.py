@@ -152,23 +152,26 @@ async def start_training(request: Request) -> JSONResponse:
     train_type = request.query_params.get("train_mode", "lora")
     is_flux = request.query_params.get("flux", "False") == "True"
     is_anima = request.query_params.get("anima", "False") == "True"
+    is_moss = request.query_params.get("moss", "False") == "True"
 
     # Parse accelerate (multi-GPU) settings
     accelerate_enabled = request.query_params.get("accelerate_enabled", "False") == "True"
     accelerate_num_processes = int(request.query_params.get("accelerate_num_processes", "2"))
     accelerate_main_process_port = int(request.query_params.get("accelerate_main_process_port", "29500"))
-    match [train_type, is_sdxl, is_flux, is_anima]:
-        case ["lora", False, False, False]:
+    match [train_type, is_sdxl, is_flux, is_anima, is_moss]:
+        case ["lora", False, False, False, False]:
             app.state.TRAIN_SCRIPT = "train_network.py"
-        case ["lora", True, False, False]:
+        case ["lora", True, False, False, False]:
             app.state.TRAIN_SCRIPT = "sdxl_train_network.py"
-        case ["lora", False, True, False]:
+        case ["lora", False, True, False, False]:
             app.state.TRAIN_SCRIPT = "flux_train_network.py"
-        case ["lora", False, False, True]:
+        case ["lora", False, False, True, False]:
             app.state.TRAIN_SCRIPT = "anima_train_network.py"
-        case ["textual_inversion", False, False, False]:
+        case ["lora", False, False, False, True]:
+            app.state.TRAIN_SCRIPT = "moss_train_network.py"
+        case ["textual_inversion", False, False, False, False]:
             app.state.TRAIN_SCRIPT = "train_textual_inversion.py"
-        case ["textual_inversion", True, False, False]:
+        case ["textual_inversion", True, False, False, False]:
             app.state.TRAIN_SCRIPT = "sdxl_train_textual_inversion.py"
         case _:
             print("Unknown training request: {request.query_params}")
@@ -179,6 +182,7 @@ async def start_training(request: Request) -> JSONResponse:
                     "train_type": train_type,
                     "flux": is_flux,
                     "anima": is_anima,
+                    "moss": is_moss,
                 },
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
