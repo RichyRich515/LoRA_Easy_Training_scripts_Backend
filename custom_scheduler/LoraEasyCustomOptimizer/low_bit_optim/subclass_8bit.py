@@ -9,11 +9,10 @@ import torch
 from torch import Tensor
 from torch.utils._python_dispatch import return_and_correct_aliasing
 
-from torchao.utils import (
-    TORCH_VERSION_AT_LEAST_2_4,
-    TORCH_VERSION_AT_LEAST_2_5,
-    TorchAOBaseTensor,
-)
+from torchao.utils import TorchAOBaseTensor
+
+# torchao 0.13+ removed its TORCH_VERSION_AT_LEAST_* flags; the backend requires torch >= 2.7
+TORCH_VERSION_AT_LEAST_2_4 = TORCH_VERSION_AT_LEAST_2_5 = True
 
 from .quant_utils import (
     create_dynamic_map,

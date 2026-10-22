@@ -8,7 +8,10 @@ from typing import Type
 import torch
 from torch.optim.optimizer import Optimizer, ParamsT
 
-from torchao.utils import TORCH_VERSION_AT_LEAST_2_4, get_available_devices
+from torchao.utils import get_available_devices
+
+# torchao 0.13+ removed its TORCH_VERSION_AT_LEAST_* flags; the backend requires torch >= 2.7
+TORCH_VERSION_AT_LEAST_2_4 = TORCH_VERSION_AT_LEAST_2_5 = True
 
 
 # NOTE: We make this inherit Optimizer so it works with PyTorch's built-in LR
