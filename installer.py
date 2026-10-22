@@ -65,14 +65,10 @@ def setup_accelerate(platform: str) -> None:
     shutil.move("default_config.yaml", str(path.resolve()))
 
 
-# flash-attention wheel URLs for each platform/python combination
-FLASH_ATTN_WHEELS = {
-    ("win32", 11): "https://github.com/sdbds/flash-attention-for-windows/releases/download/2.8.0.post2/flash_attn-2.8.0.post2+cu128torch2.7.1cxx11abiFALSEfullbackward-cp311-cp311-win_amd64.whl",
-    ("linux", 10): "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.0.post2/flash_attn-2.8.0.post2+cu12torch2.7cxx11abiFALSE-cp310-cp310-linux_x86_64.whl",
-    ("linux", 11): "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.0.post2/flash_attn-2.8.0.post2+cu12torch2.7cxx11abiFALSE-cp311-cp311-linux_x86_64.whl",
-    ("linux", 12): "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.0.post2/flash_attn-2.8.0.post2+cu12torch2.7cxx11abiFALSE-cp312-cp312-linux_x86_64.whl",
-    ("linux", 13): "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.0.post2/flash_attn-2.8.0.post2+cu12torch2.7cxx11abiFALSE-cp313-cp313-linux_x86_64.whl",
-}
+# flash-attention wheel URLs for each platform/python combination. The previous wheels were built against
+# torch 2.7 / cu12 and do not load with torch 2.14 / cu130; add matching builds here when available.
+# PyTorch SDPA (efficient / cuDNN) is used without them.
+FLASH_ATTN_WHEELS = {}
 
 
 def _install_flash_attn(uv: str, venv_path: str = "venv") -> None:
@@ -101,8 +97,9 @@ def setup_venv(uv: str, venv_path: str = "venv"):
 
     uv_pip_install(
         uv,
-        "-U", "torch~=2.7.1", "torchvision~=0.22.1", "numpy~=2.2.6",
-        "--index-url", "https://download.pytorch.org/whl/cu128",
+        # cu130 brings cuDNN 9.24: the cuDNN 9.7 of cu128 gave NaN attention gradients (MOSS-Image)
+        "-U", "torch~=2.14.1", "torchvision~=0.29.1", "numpy~=2.2.6",
+        "--index-url", "https://download.pytorch.org/whl/cu130",
         venv_path=venv_path,
     )
 
@@ -122,16 +119,16 @@ def setup_venv(uv: str, venv_path: str = "venv"):
 
     uv_pip_install(
         uv,
-        "-U", "--no-deps", "xformers==0.0.31.post1",
-        "--index-url", "https://download.pytorch.org/whl/cu128",
+        "-U", "--no-deps", "xformers==0.0.35",
+        "--index-url", "https://download.pytorch.org/whl/cu130",
         venv_path=venv_path,
     )
 
     uv_pip_install(
         uv,
-        "-U", "--no-deps", "torchao~=0.13.0",
+        "-U", "--no-deps", "torchao~=0.18.0",
         "--index-strategy", "unsafe-best-match",
-        "--extra-index-url", "https://download.pytorch.org/whl/cu128",
+        "--extra-index-url", "https://download.pytorch.org/whl/cu130",
         venv_path=venv_path,
     )
 
